@@ -1,0 +1,1592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<title>🔥 Flamezone — Play Together</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;600;700;900&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --fire: #ff4500;
+    --gold: #ffd700;
+    --pink: #ff2d78;
+    --teal: #00e5cc;
+    --dark: #0d0d1a;
+    --card: #16162a;
+    --card2: #1e1e38;
+    --text: #f0f0ff;
+    --muted: #8888bb;
+    --online: #00e676;
+    --radius: 16px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Nunito',sans-serif;background:var(--dark);color:var(--text);min-height:100vh;overflow-x:hidden}
+  /* ANIMATIONS */
+  @keyframes fadeIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+  @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+  @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+  @keyframes flame{0%,100%{text-shadow:0 0 10px #ff4500,0 0 20px #ff4500}50%{text-shadow:0 0 20px #ffd700,0 0 40px #ff4500,0 0 60px #ff2d78}}
+  @keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+  @keyframes pop{0%{transform:scale(0.5);opacity:0}70%{transform:scale(1.15)}100%{transform:scale(1);opacity:1}}
+  @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+  @keyframes glow{0%,100%{box-shadow:0 0 10px var(--fire)}50%{box-shadow:0 0 30px var(--fire),0 0 60px var(--pink)}}
+
+  /* LAYOUT */
+  #app{display:flex;flex-direction:column;min-height:100vh}
+  .screen{display:none;animation:fadeIn .4s ease}
+  .screen.active{display:flex;flex-direction:column;flex:1}
+
+  /* HEADER */
+  header{background:var(--card);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #ffffff10;position:sticky;top:0;z-index:100}
+  .logo{font-family:'Bebas Neue',sans-serif;font-size:28px;animation:flame 2s infinite;background:linear-gradient(135deg,var(--fire),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+  .header-right{display:flex;gap:10px;align-items:center}
+  .avatar-chip{display:flex;align-items:center;gap:8px;background:var(--card2);border-radius:30px;padding:5px 12px 5px 5px;font-size:13px;font-weight:700}
+  .avatar{width:30px;height:30px;border-radius:50%;object-fit:cover;border:2px solid var(--fire)}
+  .avatar-initials{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--fire),var(--pink));display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;color:#fff}
+
+  /* BUTTONS */
+  .btn{border:none;cursor:pointer;border-radius:12px;font-family:'Nunito',sans-serif;font-weight:700;transition:all .2s;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+  .btn-primary{background:linear-gradient(135deg,var(--fire),var(--pink));color:#fff;padding:12px 24px;font-size:15px}
+  .btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 20px #ff450055}
+  .btn-secondary{background:var(--card2);color:var(--text);padding:12px 24px;font-size:15px;border:1px solid #ffffff20}
+  .btn-secondary:hover{background:#252545;transform:translateY(-2px)}
+  .btn-sm{padding:8px 16px;font-size:13px;border-radius:8px}
+  .btn-danger{background:#ff1744;color:#fff}
+  .btn-teal{background:linear-gradient(135deg,var(--teal),#00a896);color:#000}
+  .btn-gold{background:linear-gradient(135deg,var(--gold),#ffaa00);color:#000}
+  .btn-icon{background:transparent;color:var(--muted);padding:8px;border-radius:8px;font-size:18px;border:none;cursor:pointer;transition:.2s}
+  .btn-icon:hover{color:var(--text);background:#ffffff15}
+
+  /* INPUT */
+  .input{background:var(--card2);border:1.5px solid #ffffff15;color:var(--text);border-radius:10px;padding:12px 16px;font-size:15px;font-family:'Nunito',sans-serif;width:100%;outline:none;transition:.2s}
+  .input:focus{border-color:var(--fire);box-shadow:0 0 0 3px #ff450020}
+  .label{font-size:13px;color:var(--muted);margin-bottom:6px;display:block;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+  .form-group{margin-bottom:16px}
+
+  /* CARDS */
+  .card{background:var(--card);border-radius:var(--radius);padding:20px;border:1px solid #ffffff10}
+
+  /* TOAST */
+  #toast-container{position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:8px}
+  .toast{background:var(--card2);border-radius:10px;padding:12px 18px;font-size:14px;font-weight:700;animation:slideIn .3s ease;border-left:4px solid var(--fire);max-width:280px}
+  .toast.success{border-color:var(--online)}
+  .toast.error{border-color:#ff1744}
+
+  /* ======================== LOGIN SCREEN ======================== */
+  #screen-login{align-items:center;justify-content:center;padding:20px;padding-top:max(20px,env(safe-area-inset-top));background:radial-gradient(ellipse at center,#1a0a2e 0%,var(--dark) 70%)}
+  .login-box{width:100%;max-width:420px;animation:pop .5s ease}
+  .login-box h1{font-family:'Bebas Neue',sans-serif;font-size:52px;text-align:center;background:linear-gradient(135deg,var(--fire),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:4px;animation:flame 2s infinite}
+  .login-box .tagline{text-align:center;color:var(--muted);margin-bottom:28px;font-size:15px}
+  .divider{display:flex;align-items:center;gap:12px;margin:20px 0;color:var(--muted);font-size:13px}
+  .divider::before,.divider::after{content:'';flex:1;height:1px;background:#ffffff15}
+  .google-btn{width:100%;background:#fff;color:#222;border:none;border-radius:12px;padding:13px;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:.2s;font-family:'Nunito',sans-serif}
+  .google-btn:hover{transform:translateY(-2px);box-shadow:0 8px 20px #ffffff30}
+  .google-btn img{width:20px}
+
+  /* ======================== LOBBY SCREEN ======================== */
+  #screen-lobby{padding:0}
+  .lobby-inner{padding:20px;max-width:700px;margin:0 auto;width:100%}
+  .welcome-banner{background:linear-gradient(135deg,#1a0535,#0d1a3a);border-radius:var(--radius);padding:24px;margin-bottom:20px;border:1px solid #ffffff15;position:relative;overflow:hidden}
+  .welcome-banner::before{content:'🔥';position:absolute;right:-10px;top:-10px;font-size:80px;opacity:.1}
+  .welcome-banner h2{font-family:'Bebas Neue',sans-serif;font-size:32px;color:var(--gold)}
+  .welcome-banner p{color:var(--muted);font-size:14px;margin-top:4px}
+  .games-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px}
+  .game-card{background:var(--card);border-radius:var(--radius);padding:20px;border:1px solid #ffffff10;cursor:pointer;transition:.2s;text-align:center}
+  .game-card:hover{transform:translateY(-4px);border-color:var(--fire);box-shadow:0 8px 24px #ff450030}
+  .game-card .emoji{font-size:36px;display:block;margin-bottom:8px;animation:float 3s ease-in-out infinite}
+  .game-card h3{font-size:16px;font-weight:900}
+  .game-card p{font-size:12px;color:var(--muted);margin-top:4px}
+  .rooms-section h3{font-family:'Bebas Neue',sans-serif;font-size:22px;margin-bottom:12px;color:var(--gold)}
+  .room-item{background:var(--card);border-radius:12px;padding:14px 16px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;border:1px solid #ffffff10;transition:.2s}
+  .room-item:hover{border-color:var(--teal)}
+  .room-info h4{font-size:14px;font-weight:900}
+  .room-info p{font-size:12px;color:var(--muted)}
+  .room-badge{background:var(--card2);border-radius:20px;padding:4px 10px;font-size:12px;font-weight:700}
+  .create-room-form{background:var(--card);border-radius:var(--radius);padding:20px;margin-bottom:20px;border:1px solid #ffffff10}
+  .create-room-form h3{font-family:'Bebas Neue',sans-serif;font-size:20px;margin-bottom:14px;color:var(--teal)}
+
+  /* ======================== ROOM SCREEN ======================== */
+  #screen-room{display:none;flex-direction:column;overflow:hidden}
+  #screen-room.active{display:flex}
+  .room-main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+  .room-header{padding:14px 20px;background:var(--card);border-bottom:1px solid #ffffff10;display:flex;align-items:center;gap:12px}
+  .room-header h2{font-family:'Bebas Neue',sans-serif;font-size:22px;flex:1}
+  .game-area{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px}
+  .sidebar{width:240px;background:var(--card);border-left:1px solid #ffffff10;display:flex;flex-direction:column;overflow:hidden}
+  .sidebar-tabs{display:flex;border-bottom:1px solid #ffffff10}
+  .sidebar-tab{flex:1;padding:12px;text-align:center;cursor:pointer;font-size:12px;font-weight:700;color:var(--muted);transition:.2s;border:none;background:none}
+  .sidebar-tab.active{color:var(--fire);border-bottom:2px solid var(--fire)}
+  .sidebar-panel{display:none;flex:1;overflow:hidden;flex-direction:column}
+  .sidebar-panel.active{display:flex}
+
+  /* CHAT */
+  .chat-messages{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px}
+  .chat-msg{animation:fadeIn .2s ease}
+  .chat-msg .meta{font-size:11px;color:var(--muted);margin-bottom:2px}
+  .chat-msg .meta span{color:var(--text);font-weight:700}
+  .chat-msg .bubble{background:var(--card2);border-radius:10px;padding:8px 12px;font-size:13px;display:inline-block;max-width:100%;word-break:break-word}
+  .chat-msg.own .meta{text-align:right}
+  .chat-msg.own .bubble{background:linear-gradient(135deg,#2d0d4e,#1a1060);float:right}
+  .chat-msg.system .bubble{background:transparent;color:var(--muted);font-style:italic;font-size:12px;text-align:center;width:100%}
+  .chat-input-area{padding:10px;border-top:1px solid #ffffff10;display:flex;gap:8px}
+  .chat-input-area .input{flex:1;padding:9px 13px;font-size:13px}
+
+  /* PLAYERS LIST */
+  .players-list{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px}
+  .player-item{display:flex;align-items:center;gap:10px;background:var(--card2);border-radius:10px;padding:10px 12px}
+  .player-item .status-dot{width:8px;height:8px;border-radius:50%;background:var(--online);flex-shrink:0}
+  .player-item .pname{font-size:13px;font-weight:700;flex:1}
+  .player-item .crown{font-size:14px}
+  .kick-btn{background:#ff174420;color:#ff1744;border:1px solid #ff174440;border-radius:6px;padding:3px 8px;font-size:11px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:700;transition:.2s}
+  .kick-btn:hover{background:#ff1744;color:#fff}
+  .admin-bar{padding:10px;border-top:1px solid #ffffff10}
+
+  /* FLAMES GAME */
+  .flames-card{background:linear-gradient(135deg,#2d0535,#1a0a3a);border-radius:var(--radius);padding:28px;text-align:center;border:1px solid #ff450030}
+  .flames-title{font-family:'Bebas Neue',sans-serif;font-size:36px;background:linear-gradient(135deg,var(--fire),var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:6px}
+  .flames-inputs{display:flex;flex-direction:column;gap:12px;margin:20px 0}
+  .flames-result{background:var(--card2);border-radius:12px;padding:20px;margin-top:16px;animation:pop .4s ease}
+  .flames-result .result-emoji{font-size:52px;display:block;margin-bottom:8px;animation:pulse 1s infinite}
+  .flames-result .result-text{font-family:'Bebas Neue',sans-serif;font-size:28px}
+  .flames-result .result-label{font-size:14px;color:var(--muted);margin-top:4px}
+
+  /* TRUTH OR DARE */
+  .tod-card{background:linear-gradient(135deg,#0d1a3a,#1a0535);border-radius:var(--radius);padding:28px;text-align:center;border:1px solid #ff2d7830}
+  .tod-title{font-family:'Bebas Neue',sans-serif;font-size:36px;background:linear-gradient(135deg,var(--pink),var(--teal));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:16px}
+  .tod-btns{display:flex;gap:12px;justify-content:center;margin-bottom:20px}
+  .tod-question{background:var(--card2);border-radius:12px;padding:24px;font-size:18px;font-weight:700;line-height:1.5;min-height:80px;display:flex;align-items:center;justify-content:center;animation:pop .3s ease}
+  .tod-type-badge{display:inline-block;border-radius:20px;padding:4px 14px;font-size:12px;font-weight:900;margin-bottom:12px;text-transform:uppercase;letter-spacing:1px}
+  .tod-type-badge.truth{background:#00e5cc20;color:var(--teal);border:1px solid #00e5cc40}
+  .tod-type-badge.dare{background:#ff2d7820;color:var(--pink);border:1px solid #ff2d7840}
+
+  /* CALLS GAME */
+  .calls-card{background:linear-gradient(135deg,#0a1f3a,#1a0a2e);border-radius:var(--radius);padding:28px;text-align:center;border:1px solid #00e5cc30}
+  .calls-title{font-family:'Bebas Neue',sans-serif;font-size:36px;background:linear-gradient(135deg,var(--teal),#7c3aed);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:6px}
+  .calls-wheel-wrap{position:relative;display:inline-block;margin:0 auto}
+  #calls-wheel{border-radius:50%;box-shadow:0 0 30px #00e5cc40;display:block;margin:0 auto}
+  #calls-wheel-pointer{position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:24px;color:var(--gold);filter:drop-shadow(0 0 6px #ffd700)}
+  .calls-picked-player{font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--teal);margin-bottom:10px;animation:pop .4s ease}
+  .calls-challenge-text{background:var(--card2);border-radius:12px;padding:20px;font-size:16px;font-weight:700;line-height:1.5;animation:pop .3s ease;border:1px solid #00e5cc20}
+  #calls-challenge-badge{display:inline-block;border-radius:20px;padding:4px 14px;font-size:12px;font-weight:900;margin-bottom:10px;text-transform:uppercase;letter-spacing:1px;background:#7c3aed30;color:#a78bfa;border:1px solid #7c3aed50}
+
+  /* RESPONSIVE */
+  @media(max-width:600px){
+    /* Sidebar hidden on mobile — use drawer instead */
+    .sidebar{display:none}
+    #screen-room.active{flex-direction:column;height:auto;min-height:calc(100vh - 56px)}
+    #screen-room .room-main{height:calc(100vh - 56px - 58px - 48px);overflow:hidden;display:flex;flex-direction:column}
+    .game-area{padding:12px;padding-bottom:8px}
+
+    /* Bottom nav */
+    .mobile-bottom{display:flex;position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:2px solid #ffffff15;z-index:100;padding-bottom:env(safe-area-inset-bottom)}
+    .mobile-bottom-btn{flex:1;padding:10px 4px 8px;text-align:center;cursor:pointer;font-size:10px;font-weight:700;color:var(--muted);border:none;background:none;font-family:'Nunito',sans-serif;display:flex;flex-direction:column;align-items:center;gap:3px;transition:.2s;min-width:0}
+    .mobile-bottom-btn.active{color:var(--fire)}
+    .mobile-bottom-btn.active .mob-icon{transform:scale(1.15)}
+    .mobile-bottom-btn .mob-icon{font-size:19px;transition:.2s}
+
+    /* Lobby bottom padding so content isn't behind nav */
+    .lobby-inner{padding-bottom:80px}
+
+    /* Bigger tap targets */
+    .btn{min-height:44px}
+    .btn-sm{min-height:38px;padding:8px 14px}
+    .input{min-height:44px;font-size:16px!important} /* 16px prevents iOS zoom */
+    .chat-input-area .input{min-height:40px}
+
+    /* Header compact */
+    header{padding:10px 14px}
+    .logo{font-size:22px}
+    .avatar-chip{padding:4px 10px 4px 4px;font-size:12px}
+
+    /* Login screen */
+    .login-box h1{font-size:44px}
+    .login-box{padding:0 4px}
+
+    /* Room header — hide text on very small screens */
+    .room-call-btns{gap:6px}
+    .call-header-btn{width:34px;height:34px;font-size:14px}
+
+    /* Games grid */
+    .games-grid{grid-template-columns:1fr 1fr;gap:10px}
+    .game-card{padding:14px 10px}
+    .game-card .emoji{font-size:28px}
+    .game-card h3{font-size:14px}
+
+    /* Wheel canvas responsive */
+    #calls-wheel{width:200px!important;height:200px!important}
+
+    /* Toast bottom above bottom nav */
+    #toast-container{bottom:72px;right:12px;left:12px}
+    .toast{max-width:100%}
+
+    /* Game cards padding */
+    .flames-card,.tod-card,.calls-card{padding:18px 14px}
+    .flames-title,.tod-title,.calls-title{font-size:28px}
+
+    /* Welcome banner */
+    .welcome-banner{padding:16px}
+    .welcome-banner h2{font-size:24px}
+
+    /* Drawer sits above bottom nav */
+    .mobile-chat-drawer{bottom:58px}
+  }
+  @media(min-width:601px){
+    .mobile-bottom{display:none}
+    #screen-room.active{display:flex;flex-direction:row;height:calc(100vh - 60px);overflow:hidden}
+  }
+
+  .empty-state{text-align:center;color:var(--muted);padding:40px 20px;font-size:14px}
+  .empty-state .es-icon{font-size:40px;display:block;margin-bottom:12px}
+  .loading{display:flex;align-items:center;justify-content:center;gap:10px;color:var(--muted);padding:40px}
+  .spinner{width:24px;height:24px;border:3px solid #ffffff15;border-top-color:var(--fire);border-radius:50%;animation:spin .7s linear infinite}
+  .badge-online{background:#00e67620;color:var(--online);border:1px solid #00e67640;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700}
+  .section-title{font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--gold);margin-bottom:12px}
+  .gap{flex:1}
+
+  /* Mobile chat drawer */
+  .mobile-chat-drawer{display:none;position:fixed;bottom:60px;left:0;right:0;top:60px;background:var(--dark);z-index:200;flex-direction:column}
+  .mobile-chat-drawer.open{display:flex}
+  .drawer-header{padding:14px 16px;background:var(--card);border-bottom:1px solid #ffffff10;display:flex;align-items:center;justify-content:space-between;font-weight:700}
+
+  /* Confetti */
+  .confetti-piece{position:fixed;width:10px;height:10px;border-radius:2px;animation:confettiFall 2s ease-in forwards;z-index:9999;pointer-events:none}
+  @keyframes confettiFall{to{transform:translateY(110vh) rotate(720deg);opacity:0}}
+
+  /* ======================== CALL FEATURE ======================== */
+  @keyframes ringPulse{0%,100%{box-shadow:0 0 0 0 rgba(0,230,118,.5)}70%{box-shadow:0 0 0 20px rgba(0,230,118,0)}}
+  @keyframes callGlow{0%,100%{box-shadow:0 0 20px #00e676}50%{box-shadow:0 0 50px #00e676,0 0 80px #00e67640}}
+  @keyframes waveBar{0%,100%{transform:scaleY(.4)}50%{transform:scaleY(1)}}
+
+  /* Call button in header */
+  .call-header-btn{background:linear-gradient(135deg,#00e676,#00b248);color:#000;border:none;border-radius:50%;width:38px;height:38px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:.2s;flex-shrink:0}
+  .call-header-btn:hover{transform:scale(1.1);box-shadow:0 4px 16px #00e67650}
+
+  /* Incoming call overlay */
+  #call-incoming{display:none;position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.92);backdrop-filter:blur(12px);flex-direction:column;align-items:center;justify-content:center;animation:fadeIn .3s ease}
+  #call-incoming.show{display:flex}
+  .incoming-avatar{width:100px;height:100px;border-radius:50%;background:linear-gradient(135deg,var(--fire),var(--pink));display:flex;align-items:center;justify-content:center;font-size:40px;margin-bottom:20px;animation:ringPulse 1.5s infinite}
+  .incoming-name{font-family:'Bebas Neue',sans-serif;font-size:36px;color:#fff;margin-bottom:6px}
+  .incoming-type{color:var(--muted);font-size:15px;margin-bottom:40px}
+  .call-action-btns{display:flex;gap:40px;align-items:center}
+  .call-reject-btn{width:64px;height:64px;border-radius:50%;background:#ff1744;border:none;cursor:pointer;font-size:26px;display:flex;align-items:center;justify-content:center;transition:.2s;box-shadow:0 4px 20px #ff174460}
+  .call-reject-btn:hover{transform:scale(1.1)}
+  .call-accept-btn{width:72px;height:72px;border-radius:50%;background:#00e676;border:none;cursor:pointer;font-size:28px;display:flex;align-items:center;justify-content:center;transition:.2s;animation:callGlow 1.5s infinite}
+  .call-accept-btn:hover{transform:scale(1.1)}
+  .call-accept-video-btn{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,#00e5cc,#0077ff);border:none;cursor:pointer;font-size:24px;display:flex;align-items:center;justify-content:center;transition:.2s;box-shadow:0 4px 20px #00e5cc60}
+  .call-accept-video-btn:hover{transform:scale(1.1)}
+
+  /* Active call overlay */
+  #call-active{display:none;position:fixed;inset:0;z-index:9999;flex-direction:column;background:#000;animation:fadeIn .3s ease}
+  #call-active.show{display:flex}
+  #call-remote-video{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;background:#111}
+  #call-local-video{position:absolute;top:16px;right:16px;width:100px;height:140px;object-fit:cover;border-radius:12px;border:2px solid #ffffff40;background:#222;z-index:2;cursor:pointer;transition:.2s}
+  #call-local-video:hover{transform:scale(1.04)}
+  .call-active-overlay{position:absolute;inset:0;display:flex;flex-direction:column;z-index:3;pointer-events:none}
+  .call-active-top{padding:20px;display:flex;flex-direction:column;align-items:center;pointer-events:none;background:linear-gradient(to bottom,rgba(0,0,0,.7) 0%,transparent 100%);padding-bottom:40px}
+  .call-active-name{font-family:'Bebas Neue',sans-serif;font-size:28px;color:#fff;margin-top:8px}
+  .call-active-status{color:rgba(255,255,255,.7);font-size:14px;margin-top:4px}
+  .call-timer{color:#00e676;font-size:16px;font-weight:700;margin-top:4px;font-variant-numeric:tabular-nums}
+  .call-audio-only{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none}
+  .call-audio-avatar{width:120px;height:120px;border-radius:50%;background:linear-gradient(135deg,var(--fire),var(--pink));display:flex;align-items:center;justify-content:center;font-size:48px;margin-bottom:16px}
+  .sound-wave{display:flex;align-items:flex-end;gap:4px;height:40px}
+  .wave-bar{width:5px;border-radius:4px;background:#00e676;transform-origin:bottom}
+  .wave-bar:nth-child(1){animation:waveBar .8s .0s ease-in-out infinite}
+  .wave-bar:nth-child(2){animation:waveBar .8s .1s ease-in-out infinite}
+  .wave-bar:nth-child(3){animation:waveBar .8s .2s ease-in-out infinite}
+  .wave-bar:nth-child(4){animation:waveBar .8s .1s ease-in-out infinite}
+  .wave-bar:nth-child(5){animation:waveBar .8s .0s ease-in-out infinite}
+  .call-controls{padding:24px;display:flex;gap:16px;justify-content:center;align-items:center;pointer-events:all;background:linear-gradient(to top,rgba(0,0,0,.8) 0%,transparent 100%);padding-top:40px}
+  .ctrl-btn{width:56px;height:56px;border-radius:50%;border:none;cursor:pointer;font-size:20px;display:flex;align-items:center;justify-content:center;transition:.2s;flex-shrink:0}
+  .ctrl-btn:hover{transform:scale(1.1)}
+  .ctrl-btn.active{background:#ffffff20;color:#fff}
+  .ctrl-btn.muted{background:#ff174440;color:#ff1744;border:1px solid #ff174480}
+  .ctrl-end-btn{width:64px;height:64px;border-radius:50%;background:#ff1744;border:none;cursor:pointer;font-size:24px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px #ff174460;transition:.2s}
+  .ctrl-end-btn:hover{transform:scale(1.1)}
+
+  /* Call button in room header */
+  .room-call-btns{display:flex;gap:8px}
+  
+  /* Players call button */
+  .call-player-btn{background:#00e67615;color:#00e676;border:1px solid #00e67640;border-radius:6px;padding:3px 8px;font-size:13px;cursor:pointer;font-family:'Nunito',sans-serif;font-weight:700;transition:.2s;margin-left:4px}
+  .call-player-btn:hover{background:#00e676;color:#000}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- ========== LOGIN SCREEN ========== -->
+<div id="screen-login" class="screen active">
+  <div class="login-box">
+    <h1>🔥 FlamZone</h1>
+    <p class="tagline">Play FLAMES & Truth or Dare with friends</p>
+    <div class="card">
+      <div class="form-group">
+        <label class="label">Email</label>
+        <input id="login-email" class="input" type="email" placeholder="you@email.com"/>
+      </div>
+      <div class="form-group">
+        <label class="label">Password</label>
+        <input id="login-password" class="input" type="password" placeholder="••••••••"/>
+      </div>
+      <div class="form-group">
+        <label class="label">Display Name <span style="color:var(--muted);font-size:11px">(for signup)</span></label>
+        <input id="login-name" class="input" placeholder="e.g. Cool Kid 😎"/>
+      </div>
+      <div style="display:flex;gap:10px;margin-bottom:12px">
+        <button class="btn btn-primary" style="flex:1" onclick="emailLogin()">🔐 Login</button>
+        <button class="btn btn-secondary" style="flex:1" onclick="emailSignup()">✨ Sign Up</button>
+      </div>
+      <div class="divider">or</div>
+      <button class="google-btn" onclick="googleLogin()">
+        <svg width="20" height="20" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.2l6.8-6.8C35.6 2.3 30.1 0 24 0 14.7 0 6.7 5.4 2.7 13.3l7.9 6.1C12.5 13 17.8 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h12.7c-.6 3-2.4 5.5-4.9 7.2l7.7 6c4.5-4.2 7-10.4 7-17.2z"/><path fill="#FBBC05" d="M10.6 28.6C10.2 27.2 10 25.6 10 24s.2-3.2.6-4.6L2.7 13.3C1 16.3 0 19.9 0 24c0 4.1 1 7.7 2.7 10.7l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.1 0 11.3-2 15-5.4l-7.7-6c-2 1.4-4.6 2.2-7.3 2.2-6.2 0-11.5-3.5-13.4-8.8l-7.9 6.1C6.7 42.6 14.7 48 24 48z"/></svg>
+        Continue with Google
+      </button>
+    </div>
+    <p style="text-align:center;margin-top:14px;color:var(--muted);font-size:12px">🔒 Secured by Firebase Auth</p>
+  </div>
+</div>
+
+<!-- ========== LOBBY SCREEN ========== -->
+<div id="screen-lobby" class="screen">
+  <header>
+    <span class="logo">🔥 FlamZone</span>
+    <div class="header-right">
+      <div class="avatar-chip">
+        <div class="avatar-initials" id="header-initials">?</div>
+        <span id="header-username">...</span>
+      </div>
+      <button class="btn-icon" onclick="logout()" title="Logout">🚪</button>
+    </div>
+  </header>
+  <div class="lobby-inner">
+    <div class="welcome-banner">
+      <h2>Welcome back! 👋</h2>
+      <p id="welcome-sub">Loading your world...</p>
+    </div>
+    <!-- Games -->
+    <div class="section-title">🎮 Quick Play</div>
+    <div class="games-grid" style="margin-bottom:20px">
+      <div class="game-card" onclick="showTab('tab-flames')">
+        <span class="emoji">❤️‍🔥</span>
+        <h3>FLAMES</h3>
+        <p>Find your fate</p>
+      </div>
+      <div class="game-card" onclick="showTab('tab-tod')">
+        <span class="emoji">🎯</span>
+        <h3>Truth or Dare</h3>
+        <p>Spill or do it</p>
+      </div>
+      <div class="game-card" onclick="joinRoomAndGame('calls')" style="grid-column:span 2">
+        <span class="emoji">📞</span>
+        <h3>Calls</h3>
+        <p>Random call challenges & dares with your squad</p>
+      </div>
+    </div>
+    <!-- Create Room -->
+    <div class="create-room-form">
+      <h3>➕ Create Room</h3>
+      <div class="form-group">
+        <label class="label">Room Name</label>
+        <input id="room-name-input" class="input" placeholder="e.g. Squad Vibes 🔥"/>
+      </div>
+      <button class="btn btn-teal btn-sm" onclick="createRoom()">Create & Join</button>
+    </div>
+    <!-- Join Room -->
+    <div style="margin-bottom:20px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div class="section-title" style="margin:0">🚪 Live Rooms</div>
+        <span id="rooms-count" class="badge-online">Loading...</span>
+      </div>
+      <div id="rooms-list"><div class="loading"><div class="spinner"></div> Loading rooms...</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== ROOM SCREEN ========== -->
+<div id="screen-room" class="screen">
+  <header>
+    <span class="logo" style="font-size:22px">🔥</span>
+    <div style="flex:1;margin-left:8px">
+      <div style="font-weight:900;font-size:15px" id="room-header-name">Room</div>
+      <div id="room-header-sub" style="font-size:11px;color:var(--muted)">Loading...</div>
+    </div>
+    <button class="btn btn-secondary btn-sm" onclick="leaveRoom()">🏃 Leave</button>
+    <div class="room-call-btns">
+      <button class="call-header-btn" onclick="startCall('voice')" title="Voice Call">📞</button>
+      <button class="call-header-btn" style="background:linear-gradient(135deg,#00e5cc,#0077ff)" onclick="startCall('video')" title="Video Call">📹</button>
+    </div>
+  </header>
+  <div style="display:flex;flex:1;overflow:hidden">
+    <div class="room-main">
+      <!-- Game Tabs -->
+      <div style="display:flex;background:var(--card);border-bottom:1px solid #ffffff10;padding:0 16px;gap:4px">
+        <button class="sidebar-tab active" id="tab-flames" onclick="selectGameTab('flames')">❤️‍🔥 FLAMES</button>
+        <button class="sidebar-tab" id="tab-tod" onclick="selectGameTab('tod')">🎯 T or D</button>
+        <button class="sidebar-tab" id="tab-calls" onclick="selectGameTab('calls')">📞 Calls</button>
+        <button class="sidebar-tab" id="tab-mob-chat" onclick="toggleMobileChat()" style="display:none">💬 Chat</button>
+      </div>
+      <div class="game-area">
+        <!-- FLAMES -->
+        <div id="game-flames">
+          <div class="flames-card">
+            <div class="flames-title">❤️‍🔥 FLAMES</div>
+            <p style="color:var(--muted);font-size:13px;margin-bottom:16px">Find your relationship status!</p>
+            <div class="flames-inputs">
+              <input id="flames-name1" class="input" placeholder="Your name 💫"/>
+              <input id="flames-name2" class="input" placeholder="Their name 💖"/>
+            </div>
+            <button class="btn btn-primary" onclick="calcFlames()">🔥 Calculate FLAMES</button>
+            <div id="flames-result" style="display:none"></div>
+          </div>
+        </div>
+        <!-- TRUTH OR DARE -->
+        <div id="game-tod" style="display:none">
+          <div class="tod-card">
+            <div class="tod-title">🎯 Truth or Dare</div>
+            <div class="tod-btns">
+              <button class="btn btn-teal" onclick="pickQuestion('truth')">🤔 Truth</button>
+              <button class="btn btn-primary" onclick="pickQuestion('dare')">😈 Dare</button>
+            </div>
+            <div id="tod-badge"></div>
+            <div id="tod-question" class="tod-question" style="display:none"></div>
+            <div id="tod-empty" style="color:var(--muted);font-size:13px">👆 Pick Truth or Dare to play!</div>
+          </div>
+        </div>
+        <!-- CALLS -->
+        <div id="game-calls" style="display:none">
+          <div class="calls-card">
+            <div class="calls-title">📞 Calls</div>
+            <p style="color:var(--muted);font-size:13px;margin-bottom:20px">Spin the wheel — someone gets a call challenge!</p>
+            <div class="calls-wheel-wrap">
+              <canvas id="calls-wheel" width="240" height="240"></canvas>
+              <div id="calls-wheel-pointer">▼</div>
+            </div>
+            <button class="btn btn-primary" style="margin:20px auto 0;display:flex" onclick="spinCallsWheel()">🎰 Spin &amp; Pick Player</button>
+            <div id="calls-challenge-area" style="display:none;margin-top:20px">
+              <div id="calls-picked-player" class="calls-picked-player"></div>
+              <div id="calls-challenge-badge"></div>
+              <div id="calls-challenge-text" class="calls-challenge-text"></div>
+              <div style="display:flex;gap:10px;justify-content:center;margin-top:14px">
+                <button class="btn btn-teal btn-sm" onclick="markCallDone()">✅ Done</button>
+                <button class="btn btn-secondary btn-sm" onclick="rerollChallenge()">🔄 Reroll</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <div class="sidebar-tabs">
+        <button class="sidebar-tab active" onclick="switchSideTab('chat')">💬 Chat</button>
+        <button class="sidebar-tab" onclick="switchSideTab('players')">👥 Players</button>
+      </div>
+      <!-- CHAT PANEL -->
+      <div id="side-chat" class="sidebar-panel active">
+        <div id="chat-messages" class="chat-messages"></div>
+        <div class="chat-input-area">
+          <input id="chat-input" class="input" placeholder="Say something..." onkeydown="if(event.key==='Enter')sendChat()"/>
+          <button class="btn btn-primary btn-sm" onclick="sendChat()">➤</button>
+        </div>
+      </div>
+      <!-- PLAYERS PANEL -->
+      <div id="side-players" class="sidebar-panel">
+        <div id="players-list-el" class="players-list"></div>
+        <div class="admin-bar" id="admin-bar" style="display:none">
+          <button class="btn btn-danger btn-sm" style="width:100%" onclick="clearChat()">🗑️ Clear Chat</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Mobile bottom nav -->
+  <div class="mobile-bottom">
+    <button class="mobile-bottom-btn active" onclick="selectGameTab('flames');setMobActive(this)"><span class="mob-icon">❤️‍🔥</span>FLAMES</button>
+    <button class="mobile-bottom-btn" onclick="selectGameTab('tod');setMobActive(this)"><span class="mob-icon">🎯</span>Truth/Dare</button>
+    <button class="mobile-bottom-btn" onclick="selectGameTab('calls');setMobActive(this)"><span class="mob-icon">📞</span>Calls</button>
+    <button class="mobile-bottom-btn" onclick="toggleMobileChat();setMobActive(this)"><span class="mob-icon">💬</span>Chat</button>
+    <button class="mobile-bottom-btn" onclick="toggleMobilePlayers();setMobActive(this)"><span class="mob-icon">👥</span>Players</button>
+  </div>
+</div>
+
+<!-- Mobile chat/players drawer -->
+<div id="mobile-drawer" class="mobile-chat-drawer">
+  <div class="drawer-header">
+    <span id="drawer-title">💬 Chat</span>
+    <button class="btn-icon" onclick="closeMobileDrawer()">✕</button>
+  </div>
+  <div id="drawer-content" style="flex:1;display:flex;flex-direction:column;overflow:hidden"></div>
+</div>
+
+<!-- ========== INCOMING CALL OVERLAY ========== -->
+<div id="call-incoming">
+  <div class="incoming-avatar" id="call-incoming-avatar">👤</div>
+  <div class="incoming-name" id="call-incoming-name">Caller</div>
+  <div class="incoming-type" id="call-incoming-type">📞 Incoming voice call...</div>
+  <div class="call-action-btns">
+    <button class="call-reject-btn" onclick="rejectCall()" title="Decline">📵</button>
+    <button class="call-accept-btn" onclick="acceptCall('voice')" id="call-accept-voice" title="Accept Voice">📞</button>
+    <button class="call-accept-video-btn" onclick="acceptCall('video')" id="call-accept-video" title="Accept Video" style="display:none">📹</button>
+  </div>
+  <p style="color:var(--muted);font-size:13px;margin-top:24px">Swipe up or tap 📞 to answer</p>
+</div>
+
+<!-- ========== ACTIVE CALL OVERLAY ========== -->
+<div id="call-active">
+  <video id="call-remote-video" autoplay playsinline></video>
+  <video id="call-local-video" autoplay playsinline muted></video>
+  <div class="call-active-overlay">
+    <div class="call-active-top">
+      <div style="color:rgba(255,255,255,.6);font-size:12px;margin-top:50px">FlamZone Call 🔥</div>
+      <div class="call-active-name" id="call-active-name">Caller</div>
+      <div class="call-active-status" id="call-active-status">Connecting...</div>
+      <div class="call-timer" id="call-timer" style="display:none">0:00</div>
+    </div>
+    <!-- Audio-only avatar (hidden for video calls) -->
+    <div class="call-audio-only" id="call-audio-visual">
+      <div class="call-audio-avatar" id="call-audio-avatar">👤</div>
+      <div class="sound-wave" id="call-sound-wave" style="display:none">
+        <div class="wave-bar" style="height:16px"></div>
+        <div class="wave-bar" style="height:28px"></div>
+        <div class="wave-bar" style="height:36px"></div>
+        <div class="wave-bar" style="height:28px"></div>
+        <div class="wave-bar" style="height:16px"></div>
+      </div>
+    </div>
+    <div class="call-controls">
+      <button class="ctrl-btn active" id="ctrl-mute" onclick="toggleMute()" title="Mute">🎤</button>
+      <button class="ctrl-btn active" id="ctrl-speaker" onclick="toggleSpeaker()" title="Speaker">🔊</button>
+      <button class="ctrl-end-btn" onclick="endCall()" title="End Call">📵</button>
+      <button class="ctrl-btn active" id="ctrl-camera" onclick="toggleCamera()" title="Camera">📷</button>
+      <button class="ctrl-btn active" id="ctrl-flip" onclick="flipCamera()" title="Flip">🔄</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast container -->
+<div id="toast-container"></div>
+
+<!-- Firebase SDKs -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+import { getDatabase, ref, push, onValue, off, set, remove, serverTimestamp, onDisconnect, get } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAZqqMTtCPCL0vkoieMuXIhVz2phK8-jAY",
+  authDomain: "gkfxl-a77f7.firebaseapp.com",
+  databaseURL: "https://gkfxl-a77f7-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "gkfxl-a77f7",
+  storageBucket: "gkfxl-a77f7.firebasestorage.app",
+  messagingSenderId: "415113682816",
+  appId: "1:415113682816:web:fc3859f92b1773deaf2b65"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getDatabase(app);
+const googleProvider = new GoogleAuthProvider();
+
+// ---- State ----
+let currentUser = null;
+let currentRoomId = null;
+let currentRoomName = null;
+let isAdmin = false;
+let chatRef = null;
+let playersRef = null;
+let roomsRef = null;
+
+// ---- Firebase error messages ----
+function firebaseError(e) {
+  const code = e?.code || '';
+  const map = {
+    'auth/invalid-email':              '📧 Invalid email address',
+    'auth/user-not-found':             '🔍 No account found with that email',
+    'auth/wrong-password':             '🔑 Wrong password — try again',
+    'auth/invalid-credential':         '🔑 Wrong email or password',
+    'auth/email-already-in-use':       '📬 That email is already registered',
+    'auth/weak-password':              '🔒 Password must be at least 6 characters',
+    'auth/too-many-requests':          '⏳ Too many attempts — try again later',
+    'auth/network-request-failed':     '🌐 Network error — check your connection',
+    'auth/popup-closed-by-user':       '🚫 Google sign-in was cancelled',
+    'auth/popup-blocked':              '🚫 Popup blocked — allow popups and retry',
+    'auth/account-exists-with-different-credential': '⚠️ Account exists with a different sign-in method',
+    'auth/user-disabled':              '🚫 This account has been disabled',
+    'auth/requires-recent-login':      '🔐 Please log in again to continue',
+    'auth/operation-not-allowed':      '⚠️ This sign-in method is not enabled',
+    'permission-denied':               '🚫 Permission denied — check Firebase rules',
+    'PERMISSION_DENIED':               '🚫 Permission denied — check Firebase rules',
+  };
+  if (map[code]) return map[code];
+  // Fallback: strip Firebase boilerplate from e.message
+  const msg = e?.message || 'Something went wrong';
+  return msg.replace(/Firebase:\s*/i,'').replace(/\s*\(auth\/[^)]+\)\.?/,'').trim() || '⚠️ Something went wrong';
+}
+
+// ---- Expose functions ----
+window.emailLogin = async () => {
+  const email = document.getElementById('login-email').value.trim();
+  const pass = document.getElementById('login-password').value;
+  if (!email || !pass) { toast('Fill in email & password', 'error'); return; }
+  try {
+    await signInWithEmailAndPassword(auth, email, pass);
+    toast('Welcome back! 🔥', 'success');
+  } catch(e) { toast(firebaseError(e), 'error'); }
+};
+
+window.emailSignup = async () => {
+  const email = document.getElementById('login-email').value.trim();
+  const pass = document.getElementById('login-password').value;
+  const name = document.getElementById('login-name').value.trim();
+  if (!email || !pass || !name) { toast('Fill in all fields', 'error'); return; }
+  if (pass.length < 6) { toast('Password must be 6+ characters', 'error'); return; }
+  try {
+    const cred = await createUserWithEmailAndPassword(auth, email, pass);
+    await updateProfile(cred.user, { displayName: name });
+    toast('Account created! 🎉', 'success');
+    confetti();
+  } catch(e) { toast(firebaseError(e), 'error'); }
+};
+
+window.googleLogin = async () => {
+  try {
+    await signInWithPopup(auth, googleProvider);
+    toast('Logged in with Google 🚀', 'success');
+  } catch(e) { toast(firebaseError(e), 'error'); }
+};
+
+window.logout = async () => {
+  if (currentRoomId) await leaveRoomClean();
+  await signOut(auth);
+  showScreen('login');
+  toast('Logged out 👋');
+};
+
+// ---- Auth state ----
+onAuthStateChanged(auth, user => {
+  if (user) {
+    currentUser = user;
+    const name = user.displayName || user.email.split('@')[0];
+    document.getElementById('header-initials').textContent = name[0].toUpperCase();
+    document.getElementById('header-username').textContent = name;
+    document.getElementById('welcome-sub').textContent = `Hey ${name}! Ready to play? 🎮`;
+    showScreen('lobby');
+    loadRooms();
+  } else {
+    currentUser = null;
+    showScreen('login');
+  }
+});
+
+// ---- ROOMS ----
+function loadRooms() {
+  const rRef = ref(db, 'rooms');
+  onValue(rRef, snap => {
+    const list = document.getElementById('rooms-list');
+    const countEl = document.getElementById('rooms-count');
+    const data = snap.val();
+    if (!data) {
+      list.innerHTML = `<div class="empty-state"><span class="es-icon">🏠</span>No rooms yet. Create one!</div>`;
+      countEl.textContent = '0 rooms';
+      return;
+    }
+    const rooms = Object.entries(data);
+    countEl.textContent = `${rooms.length} room${rooms.length !== 1 ? 's' : ''}`;
+    list.innerHTML = rooms.map(([id, room]) => {
+      const players = room.players ? Object.keys(room.players).length : 0;
+      return `<div class="room-item">
+        <div class="room-info">
+          <h4>${escHtml(room.name || 'Unnamed Room')}</h4>
+          <p>Created by ${escHtml(room.createdBy || 'Unknown')} • ${players} player${players!==1?'s':''}</p>
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="joinRoom('${id}','${escHtml(room.name || 'Room')}')">Join 🚀</button>
+      </div>`;
+    }).join('');
+  });
+}
+
+window.createRoom = async () => {
+  const name = document.getElementById('room-name-input').value.trim();
+  if (!name) { toast('Enter a room name', 'error'); return; }
+  const rRef = ref(db, 'rooms');
+  const newRoom = await push(rRef, {
+    name,
+    createdBy: currentUser.displayName || currentUser.email,
+    createdById: currentUser.uid,
+    createdAt: serverTimestamp()
+  });
+  document.getElementById('room-name-input').value = '';
+  toast('Room created! 🏠', 'success');
+  joinRoom(newRoom.key, name);
+};
+
+window.joinRoom = async (roomId, roomName) => {
+  if (currentRoomId && currentRoomId !== roomId) await leaveRoomClean();
+  currentRoomId = roomId;
+  currentRoomName = roomName;
+
+  // Add player
+  const playerRef = ref(db, `rooms/${roomId}/players/${currentUser.uid}`);
+  await set(playerRef, { name: currentUser.displayName || currentUser.email.split('@')[0], joinedAt: serverTimestamp() });
+  onDisconnect(playerRef).remove();
+
+  // Check if admin
+  const roomSnap = await get(ref(db, `rooms/${roomId}`));
+  isAdmin = roomSnap.val()?.createdById === currentUser.uid;
+
+  document.getElementById('room-header-name').textContent = '🏠 ' + roomName;
+  document.getElementById('admin-bar').style.display = isAdmin ? 'block' : 'none';
+
+  // Listen to players
+  playersRef = ref(db, `rooms/${roomId}/players`);
+  onValue(playersRef, snap => {
+    const data = snap.val() || {};
+    const players = Object.entries(data);
+    document.getElementById('room-header-sub').textContent = `${players.length} player${players.length !== 1 ? 's' : ''} online`;
+    const adminId = roomSnap.val()?.createdById;
+    document.getElementById('players-list-el').innerHTML = players.map(([uid, p]) =>
+      `<div class="player-item">
+        <div class="status-dot"></div>
+        <span class="pname">${escHtml(p.name)}${uid === adminId ? ' 👑' : ''}</span>
+        ${isAdmin && uid !== currentUser.uid ? `<button class="kick-btn" onclick="kickPlayer('${uid}','${escHtml(p.name)}')">Kick</button>` : ''}
+      </div>`
+    ).join('') || '<div class="empty-state"><span class="es-icon">👻</span>No players</div>';
+  });
+
+  // Listen to chat
+  chatRef = ref(db, `rooms/${roomId}/chat`);
+  onValue(chatRef, snap => {
+    const msgs = document.getElementById('chat-messages');
+    const data = snap.val() || {};
+    const entries = Object.values(data).sort((a,b) => (a.ts||0)-(b.ts||0));
+    msgs.innerHTML = entries.map(m => {
+      const isOwn = m.uid === currentUser.uid;
+      const isSystem = m.type === 'system';
+      return `<div class="chat-msg${isOwn?' own':''}${isSystem?' system':''}">
+        ${!isSystem ? `<div class="meta"><span>${escHtml(m.name)}</span></div>` : ''}
+        <div class="bubble">${escHtml(m.text)}</div>
+      </div>`;
+    }).join('');
+    msgs.scrollTop = msgs.scrollHeight;
+    // Mirror to mobile drawer if open
+    const dc = document.getElementById('drawer-content');
+    if (dc.dataset.panel === 'chat') renderMobileChatInDrawer();
+  });
+
+  // System join message
+  await push(chatRef, { type: 'system', text: `${currentUser.displayName || 'Someone'} joined the room 🎉`, ts: Date.now() });
+
+  showScreen('room');
+  toast(`Joined "${roomName}" 🚀`, 'success');
+};
+
+window.leaveRoom = async () => {
+  await leaveRoomClean();
+  showScreen('lobby');
+  toast('Left the room 👋');
+};
+
+async function leaveRoomClean() {
+  if (!currentRoomId) return;
+  if (chatRef) off(chatRef);
+  if (playersRef) off(playersRef);
+  // Send leave message
+  const leaveChatRef = ref(db, `rooms/${currentRoomId}/chat`);
+  await push(leaveChatRef, { type: 'system', text: `${currentUser.displayName || 'Someone'} left the room`, ts: Date.now() }).catch(()=>{});
+  // Remove player
+  await remove(ref(db, `rooms/${currentRoomId}/players/${currentUser.uid}`)).catch(()=>{});
+  // If admin & no players, delete room
+  const snap = await get(ref(db, `rooms/${currentRoomId}/players`)).catch(()=>null);
+  if (!snap || !snap.val()) {
+    await remove(ref(db, `rooms/${currentRoomId}`)).catch(()=>{});
+  }
+  currentRoomId = null;
+  currentRoomName = null;
+  isAdmin = false;
+  chatRef = null;
+  playersRef = null;
+}
+
+window.sendChat = async () => {
+  const input = document.getElementById('chat-input');
+  const text = input.value.trim();
+  if (!text || !currentRoomId) return;
+  input.value = '';
+  await push(ref(db, `rooms/${currentRoomId}/chat`), {
+    uid: currentUser.uid,
+    name: currentUser.displayName || currentUser.email.split('@')[0],
+    text,
+    ts: serverTimestamp()
+  });
+};
+
+window.kickPlayer = async (uid, name) => {
+  if (!isAdmin) return;
+  await remove(ref(db, `rooms/${currentRoomId}/players/${uid}`));
+  await push(ref(db, `rooms/${currentRoomId}/chat`), { type: 'system', text: `${name} was kicked by admin 👢`, ts: Date.now() });
+  toast(`Kicked ${name}`, 'success');
+};
+
+window.clearChat = async () => {
+  if (!isAdmin) return;
+  await remove(ref(db, `rooms/${currentRoomId}/chat`));
+  await push(ref(db, `rooms/${currentRoomId}/chat`), { type: 'system', text: '🗑️ Chat was cleared by admin', ts: Date.now() });
+  toast('Chat cleared 🗑️', 'success');
+};
+
+// ---- FLAMES ----
+window.calcFlames = () => {
+  const n1 = document.getElementById('flames-name1').value.trim().toLowerCase().replace(/\s/g,'');
+  const n2 = document.getElementById('flames-name2').value.trim().toLowerCase().replace(/\s/g,'');
+  if (!n1 || !n2) { toast('Enter both names!', 'error'); return; }
+  // Remove common chars
+  let a = n1.split(''), b = n2.split('');
+  for (let i = 0; i < a.length; i++) {
+    const idx = b.indexOf(a[i]);
+    if (idx !== -1) { a[i] = null; b[idx] = null; }
+  }
+  const count = a.filter(Boolean).length + b.filter(Boolean).length;
+  const flames = ['Friends','Love','Affection','Marriage','Enemies','Siblings'];
+  const emojis = ['🤝','💕','🥰','💍','😤','👫'];
+  const colors = ['#00e5cc','#ff2d78','#ff4500','#ffd700','#ff1744','#a78bfa'];
+  let arr = [0,1,2,3,4,5];
+  let idx = 0;
+  while (arr.length > 1) {
+    idx = (idx + count - 1) % arr.length;
+    arr.splice(idx, 1);
+    if (idx === arr.length) idx = 0;
+  }
+  const result = arr[0];
+  const resEl = document.getElementById('flames-result');
+  resEl.style.display = 'block';
+  resEl.innerHTML = `<div class="flames-result">
+    <span class="result-emoji">${emojis[result]}</span>
+    <div class="result-text" style="color:${colors[result]}">${flames[result].toUpperCase()}</div>
+    <div class="result-label">${document.getElementById('flames-name1').value} + ${document.getElementById('flames-name2').value}</div>
+  </div>`;
+  confetti();
+};
+
+// ---- TRUTH OR DARE ----
+const truths = [
+  "What's your biggest fear?","Have you ever lied to a friend?","Who was your first crush?",
+  "What's the most embarrassing thing that happened to you?","Do you have any secrets you've never told?",
+  "What's your most toxic trait?","Have you ever cheated in a game?","What's the weirdest dream you've had?",
+  "Who do you like in this room right now?","What's something you pretend to like but actually hate?",
+  "Have you ever stood someone up?","What's your biggest regret?","Do you google yourself?",
+  "What's the pettiest thing you've ever done?","Have you ever sent a text to the wrong person?"
+];
+const dares = [
+  "Text your crush 'I think about you sometimes 👀'","Do 20 pushups right now!",
+  "Send the most embarrassing photo in your gallery to someone in this room",
+  "Speak in an accent for the next 3 rounds","Do your best celebrity impression",
+  "Sing 10 seconds of your fav song","Say something nice about every person here",
+  "Let the group post anything on your story for 1 hour","Eat a spoonful of hot sauce",
+  "Do a TikTok dance right now","Call someone and speak only in rhymes",
+  "Let the group change your phone wallpaper","Wear your shirt inside out for 5 mins",
+  "Tell your most embarrassing bathroom story","Do your best catwalk across the room"
+];
+
+window.pickQuestion = (type) => {
+  const arr = type === 'truth' ? truths : dares;
+  const q = arr[Math.floor(Math.random() * arr.length)];
+  document.getElementById('tod-badge').innerHTML = `<div class="tod-type-badge ${type}">${type === 'truth' ? '🤔 TRUTH' : '😈 DARE'}</div>`;
+  document.getElementById('tod-empty').style.display = 'none';
+  const qEl = document.getElementById('tod-question');
+  qEl.style.display = 'flex';
+  qEl.textContent = q;
+  qEl.style.animation = 'none';
+  setTimeout(() => qEl.style.animation = 'pop .3s ease', 10);
+};
+
+// ---- CALLS GAME ----
+const callChallenges = [
+  { label: "📞 Call Dare", text: "Call someone NOT in this room and convince them you just won a lottery ticket 🎰" },
+  { label: "📞 Call Dare", text: "FaceTime a contact and sing them 'Happy Birthday' even if it's not their birthday 🎂" },
+  { label: "📞 Call Dare", text: "Call your mom/dad and tell them you have something important to say… then just say 'I love you' 🥹" },
+  { label: "📞 Call Dare", text: "Call a friend and speak only in questions for the whole call ❓" },
+  { label: "📞 Call Dare", text: "Call someone and pretend to be a customer service agent for a made-up company 🤵" },
+  { label: "📞 Call Dare", text: "Call someone and for the first 30 seconds only respond with animal sounds 🐸" },
+  { label: "📞 Call Dare", text: "FaceTime someone and keep a straight face no matter what they say 😐" },
+  { label: "📞 Call Dare", text: "Call your bestie and dramatically read them your horoscope as breaking news 📰" },
+  { label: "📞 Call Dare", text: "Call any contact and breathe heavily before saying anything for 10 seconds 😤" },
+  { label: "📞 Call Dare", text: "FaceTime someone with your phone upside down and don't acknowledge it 🙃" },
+  { label: "🎯 In-Group", text: "Call the last person you texted and put them on speaker for 1 minute 📢" },
+  { label: "🎯 In-Group", text: "Do a group call with 2 people outside this room at the same time 🤳" },
+  { label: "🎯 In-Group", text: "Voice note your entire contacts list 'thinking of you 💭' in the next 2 minutes" },
+  { label: "🎯 In-Group", text: "Start a video call right now — everyone in this room must wave at your contact 👋" },
+  { label: "🎯 In-Group", text: "Call someone and tell them this group says hi by name (use everyone's real name) 😅" },
+  { label: "😂 Chaos", text: "Call a random contact and say 'Don't tell anyone I called you' then hang up immediately 📵" },
+  { label: "😂 Chaos", text: "Call delivery/pizza and ask if they deliver happiness 🍕" },
+  { label: "😂 Chaos", text: "Leave a voice note to your most serious contact saying 'lol' 20 times" },
+  { label: "😂 Chaos", text: "Call your most formal contact and greet them like a hype man 🎤" },
+  { label: "😂 Chaos", text: "Call someone who doesn't know you're playing this game and put them on speaker 🔊" },
+];
+
+let callsWheelPlayers = [];
+let callsCurrentPlayer = null;
+let callsCurrentChallenge = null;
+let callsWheelSpinning = false;
+
+function initCallsWheel() {
+  // Get players from the players list
+  const playerEls = document.querySelectorAll('#players-list-el .pname');
+  callsWheelPlayers = Array.from(playerEls).map(el => el.textContent.replace(' 👑','').trim()).filter(Boolean);
+  if (callsWheelPlayers.length === 0) callsWheelPlayers = ['Player 1','Player 2'];
+  drawCallsWheel(0);
+}
+
+function drawCallsWheel(angle) {
+  const canvas = document.getElementById('calls-wheel');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const cx = 120, cy = 120, r = 110;
+  const players = callsWheelPlayers;
+  const slice = (Math.PI * 2) / players.length;
+  const colors = ['#ff4500','#ffd700','#ff2d78','#00e5cc','#a78bfa','#00e676','#ff6b35','#4ecdc4'];
+  ctx.clearRect(0,0,240,240);
+  players.forEach((p, i) => {
+    const start = angle + i * slice;
+    const end = start + slice;
+    ctx.beginPath();
+    ctx.moveTo(cx,cy);
+    ctx.arc(cx,cy,r,start,end);
+    ctx.closePath();
+    ctx.fillStyle = colors[i % colors.length];
+    ctx.fill();
+    ctx.strokeStyle = '#0d0d1a';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    // Label
+    ctx.save();
+    ctx.translate(cx,cy);
+    ctx.rotate(start + slice/2);
+    ctx.textAlign = 'right';
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 12px Nunito, sans-serif';
+    const label = p.length > 9 ? p.slice(0,8)+'…' : p;
+    ctx.fillText(label, r - 10, 4);
+    ctx.restore();
+  });
+  // Center circle
+  ctx.beginPath();
+  ctx.arc(cx,cy,28,0,Math.PI*2);
+  ctx.fillStyle = '#0d0d1a';
+  ctx.fill();
+  ctx.strokeStyle = '#ffffff20';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 13px Bebas Neue, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('📞', cx, cy+5);
+}
+
+window.spinCallsWheel = () => {
+  if (callsWheelSpinning) return;
+  initCallsWheel();
+  if (callsWheelPlayers.length === 0) { toast('No players found!','error'); return; }
+  callsWheelSpinning = true;
+  document.getElementById('calls-challenge-area').style.display = 'none';
+  const totalSpins = (Math.random() * 4 + 6) * Math.PI * 2;
+  const duration = 3000;
+  const start = performance.now();
+  let lastAngle = 0;
+  function animate(now) {
+    const elapsed = now - start;
+    const progress = Math.min(elapsed / duration, 1);
+    const ease = 1 - Math.pow(1 - progress, 3);
+    const angle = ease * totalSpins;
+    lastAngle = angle;
+    drawCallsWheel(angle);
+    if (progress < 1) { requestAnimationFrame(animate); }
+    else {
+      callsWheelSpinning = false;
+      // Determine which player is at top (pointer at top = -PI/2)
+      const sliceAngle = (Math.PI * 2) / callsWheelPlayers.length;
+      const normalized = (((-Math.PI/2) - lastAngle) % (Math.PI*2) + Math.PI*2) % (Math.PI*2);
+      const idx = Math.floor(normalized / sliceAngle) % callsWheelPlayers.length;
+      callsCurrentPlayer = callsWheelPlayers[idx];
+      showCallsChallenge();
+    }
+  }
+  requestAnimationFrame(animate);
+};
+
+function showCallsChallenge() {
+  callsCurrentChallenge = callChallenges[Math.floor(Math.random() * callChallenges.length)];
+  document.getElementById('calls-picked-player').textContent = `📞 ${callsCurrentPlayer}'s turn!`;
+  document.getElementById('calls-challenge-badge').textContent = callsCurrentChallenge.label;
+  const textEl = document.getElementById('calls-challenge-text');
+  textEl.textContent = callsCurrentChallenge.text;
+  textEl.style.animation = 'none';
+  setTimeout(() => textEl.style.animation = 'pop .3s ease', 10);
+  const area = document.getElementById('calls-challenge-area');
+  area.style.display = 'block';
+  area.style.animation = 'none';
+  setTimeout(() => area.style.animation = 'fadeIn .4s ease', 10);
+}
+
+window.rerollChallenge = () => {
+  callsCurrentChallenge = callChallenges[Math.floor(Math.random() * callChallenges.length)];
+  document.getElementById('calls-challenge-badge').textContent = callsCurrentChallenge.label;
+  const textEl = document.getElementById('calls-challenge-text');
+  textEl.textContent = callsCurrentChallenge.text;
+  textEl.style.animation = 'none';
+  setTimeout(() => textEl.style.animation = 'pop .3s ease', 10);
+};
+
+window.markCallDone = () => {
+  document.getElementById('calls-challenge-area').style.display = 'none';
+  confetti();
+  toast(`${callsCurrentPlayer} completed the call! 🎉`, 'success');
+};
+
+// ---- UI Helpers ----
+window.showScreen = (name) => {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+};
+
+window.showTab = (id) => {
+  showScreen('lobby'); // noop if already lobby
+};
+
+window.selectGameTab = (game) => {
+  document.getElementById('game-flames').style.display = game === 'flames' ? 'block' : 'none';
+  document.getElementById('game-tod').style.display = game === 'tod' ? 'block' : 'none';
+  document.getElementById('game-calls').style.display = game === 'calls' ? 'block' : 'none';
+  document.querySelectorAll('.room-main .sidebar-tab').forEach(t => t.classList.remove('active'));
+  const tabEl = document.getElementById('tab-' + game);
+  if (tabEl) tabEl.classList.add('active');
+  if (game === 'calls') initCallsWheel();
+};
+
+window.joinRoomAndGame = (game) => {
+  // If already in a room, just switch tab; otherwise go to lobby create room
+  if (currentRoomId) { showScreen('room'); selectGameTab(game); }
+  else { showScreen('lobby'); toast('Create or join a room first, then switch to Calls 📞'); }
+};
+
+window.switchSideTab = (tab) => {
+  document.querySelectorAll('.sidebar-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.sidebar-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('side-' + tab).classList.add('active');
+  event.target.classList.add('active');
+};
+
+// Mobile drawer
+let mobileDrawerPanel = null;
+window.toggleMobileChat = () => {
+  const drawer = document.getElementById('mobile-drawer');
+  if (drawer.classList.contains('open') && mobileDrawerPanel === 'chat') { closeMobileDrawer(); return; }
+  document.getElementById('drawer-title').textContent = '💬 Chat';
+  const dc = document.getElementById('drawer-content');
+  dc.dataset.panel = 'chat';
+  dc.innerHTML = `<div id="mob-chat-messages" class="chat-messages" style="flex:1;overflow-y:auto;padding:12px"></div>
+    <div class="chat-input-area" style="padding:10px;border-top:1px solid #ffffff10;display:flex;gap:8px">
+      <input id="mob-chat-input" class="input" placeholder="Say something..." style="flex:1" onkeydown="if(event.key==='Enter')sendMobChat()"/>
+      <button class="btn btn-primary btn-sm" onclick="sendMobChat()">➤</button>
+    </div>`;
+  renderMobileChatInDrawer();
+  drawer.classList.add('open');
+  mobileDrawerPanel = 'chat';
+};
+
+window.toggleMobilePlayers = () => {
+  const drawer = document.getElementById('mobile-drawer');
+  if (drawer.classList.contains('open') && mobileDrawerPanel === 'players') { closeMobileDrawer(); return; }
+  document.getElementById('drawer-title').textContent = '👥 Players';
+  const dc = document.getElementById('drawer-content');
+  dc.dataset.panel = 'players';
+  dc.innerHTML = document.getElementById('side-players').innerHTML;
+  drawer.classList.add('open');
+  mobileDrawerPanel = 'players';
+};
+
+function renderMobileChatInDrawer() {
+  const src = document.getElementById('chat-messages');
+  const dest = document.getElementById('mob-chat-messages');
+  if (dest && src) { dest.innerHTML = src.innerHTML; dest.scrollTop = dest.scrollHeight; }
+}
+
+window.sendMobChat = async () => {
+  const input = document.getElementById('mob-chat-input');
+  if (!input) return;
+  const text = input.value.trim();
+  if (!text || !currentRoomId) return;
+  input.value = '';
+  await push(ref(db, `rooms/${currentRoomId}/chat`), {
+    uid: currentUser.uid,
+    name: currentUser.displayName || currentUser.email.split('@')[0],
+    text,
+    ts: serverTimestamp()
+  });
+};
+
+window.closeMobileDrawer = () => {
+  document.getElementById('mobile-drawer').classList.remove('open');
+  mobileDrawerPanel = null;
+};
+
+window.setMobActive = (btn) => {
+  document.querySelectorAll('.mobile-bottom-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+};
+
+// Show mobile chat tab in room header on small screens
+function checkMobileTab() {
+  const t = document.getElementById('tab-mob-chat');
+  if (t) t.style.display = window.innerWidth <= 600 ? 'block' : 'none';
+}
+window.addEventListener('resize', checkMobileTab);
+checkMobileTab();
+
+// ---- Toast ----
+window.toast = (msg, type = '') => {
+  const c = document.getElementById('toast-container');
+  const t = document.createElement('div');
+  t.className = 'toast ' + type;
+  t.textContent = msg;
+  c.appendChild(t);
+  setTimeout(() => t.remove(), 3000);
+};
+
+// ---- Confetti ----
+window.confetti = () => {
+  const colors = ['#ff4500','#ffd700','#ff2d78','#00e5cc','#a78bfa','#ffffff'];
+  for (let i = 0; i < 40; i++) {
+    const p = document.createElement('div');
+    p.className = 'confetti-piece';
+    p.style.cssText = `left:${Math.random()*100}vw;top:-20px;background:${colors[Math.floor(Math.random()*colors.length)]};transform:rotate(${Math.random()*360}deg);animation-delay:${Math.random()*.8}s;animation-duration:${1.5+Math.random()}s`;
+    document.body.appendChild(p);
+    setTimeout(()=>p.remove(), 3000);
+  }
+};
+
+// ==================== CALL FEATURE (WebRTC + Firebase Signaling) ====================
+
+const ICE_SERVERS = { iceServers: [
+  // STUN — fast path, same network / simple NAT
+  { urls: 'stun:stun.l.google.com:19302' },
+  { urls: 'stun:stun1.l.google.com:19302' },
+  { urls: 'stun:stun2.l.google.com:19302' },
+  // TURN — relayed path, mobile data / different networks / symmetric NAT
+  { urls: 'turn:a.relay.metered.ca:80',              username: 'openrelayproject', credential: 'openrelayproject' },
+  { urls: 'turn:a.relay.metered.ca:80?transport=tcp', username: 'openrelayproject', credential: 'openrelayproject' },
+  { urls: 'turn:a.relay.metered.ca:443',             username: 'openrelayproject', credential: 'openrelayproject' },
+  { urls: 'turns:a.relay.metered.ca:443?transport=tcp', username: 'openrelayproject', credential: 'openrelayproject' }
+], iceCandidatePoolSize: 10 };
+
+// ── State ──────────────────────────────────────────────────────────────────────
+let pc = null;
+let localStream   = null;
+let callType      = 'voice';   // 'voice' | 'video'
+let callRole      = null;      // 'caller' | 'callee'
+let callRoomId    = null;
+let callId        = null;
+let callRef       = null;
+let callListener  = null;      // Firebase onValue unsubscribe handle
+let incomingCallRef = null;
+let callTimerInterval = null;
+let callSeconds   = 0;
+let isMuted       = false;
+let isCameraOff   = false;
+let facingMode    = 'user';
+// Track which ICE candidate keys we've already applied (prevents re-adding on every Firebase update)
+const _appliedIce = { caller: new Set(), callee: new Set() };
+
+// ── Helpers ────────────────────────────────────────────────────────────────────
+function _callPath(sub) {
+  return ref(db, `rooms/${callRoomId}/call/${callId}${sub ? '/'+sub : ''}`);
+}
+
+// Safely apply any NEW ICE candidates from a Firebase snapshot object.
+// `role` is whose candidates we're applying: 'callerIce' or 'calleeIce'.
+async function _applyNewIce(iceObj, key) {
+  if (!iceObj || !pc || pc.signalingState === 'closed') return;
+  for (const [k, candidate] of Object.entries(iceObj)) {
+    if (_appliedIce[key].has(k)) continue;   // already applied — skip
+    _appliedIce[key].add(k);
+    try {
+      await pc.addIceCandidate(new RTCIceCandidate(candidate));
+      console.log('[ICE] applied', key, k);
+    } catch(e) {
+      console.warn('[ICE] addIceCandidate failed', e.message);
+    }
+  }
+}
+
+// ── Peer connection setup ──────────────────────────────────────────────────────
+// IMPORTANT: callRef and callRole MUST be set before calling this so that
+// the onicecandidate handler can write to the right Firebase path immediately.
+function setupPeerConnection() {
+  if (pc) { pc.close(); pc = null; }
+  _appliedIce.caller.clear();
+  _appliedIce.callee.clear();
+
+  pc = new RTCPeerConnection(ICE_SERVERS);
+
+  // ── Local tracks ──
+  localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+
+  // ── Local video preview ──
+  const localVid = document.getElementById('call-local-video');
+  if (localVid) localVid.srcObject = localStream;
+
+  // ── Remote stream ──
+  const remoteStream = new MediaStream();
+  const remoteVid = document.getElementById('call-remote-video');
+  if (remoteVid) remoteVid.srcObject = remoteStream;
+  pc.ontrack = e => {
+    e.streams[0].getTracks().forEach(t => remoteStream.addTrack(t));
+    const sw = document.getElementById('call-sound-wave');
+    if (sw) sw.style.display = 'flex';
+  };
+
+  // ── ICE trickle → Firebase ──
+  // Uses a unique timestamp key so each candidate gets its own slot.
+  // callRef is already set before setupPeerConnection() is called.
+  pc.onicecandidate = e => {
+    if (!e.candidate) return;  // null = gathering complete, nothing to send
+    const icePath = callRole === 'caller' ? 'callerIce' : 'calleeIce';
+    const key = Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+    set(ref(db, `rooms/${callRoomId}/call/${callId}/${icePath}/${key}`),
+        e.candidate.toJSON()).catch(()=>{});
+  };
+
+  // ── ICE connection state ──
+  pc.oniceconnectionstatechange = () => {
+    const s = pc.iceConnectionState;
+    console.log('[ICE]', s);
+    const el = document.getElementById('call-active-status');
+    if (!el) return;
+    if (s === 'checking')                      { el.textContent = 'Connecting… 🔄'; el.style.display = 'block'; }
+    if (s === 'connected' || s === 'completed'){ el.style.display = 'none'; }
+    if (s === 'disconnected')                  { el.textContent = 'Reconnecting… 📡'; el.style.display = 'block'; }
+    if (s === 'failed') {
+      if (callRole === 'caller') {
+        console.log('[ICE] restart');
+        pc.restartIce();   // triggers a new offer/answer cycle automatically
+      } else {
+        endCallClean('Connection failed 📡');
+      }
+    }
+  };
+
+  // ── Overall connection state ──
+  pc.onconnectionstatechange = () => {
+    const s = pc.connectionState;
+    console.log('[PC]', s);
+    const el = document.getElementById('call-active-status');
+    if (s === 'connected') {
+      if (el) el.style.display = 'none';
+      const timer = document.getElementById('call-timer');
+      if (timer) timer.style.display = 'block';
+      startCallTimer();
+    }
+    if (s === 'failed') endCallClean('Connection lost 📡');
+  };
+}
+
+// ── CALLER: start a call ───────────────────────────────────────────────────────
+window.startCall = async (type) => {
+  if (!currentRoomId) { toast('Join a room first!', 'error'); return; }
+  if (pc) { toast('Already in a call!', 'error'); return; }
+  const players = document.querySelectorAll('#players-list-el .player-item');
+  if (players.length < 2) { toast('No other players to call!', 'error'); return; }
+
+  callType   = type;
+  callRole   = 'caller';
+  callRoomId = currentRoomId;
+  callId     = Date.now().toString();
+
+  // 1. Get media first
+  try {
+    localStream = await navigator.mediaDevices.getUserMedia(
+      type === 'video' ? { video: { facingMode }, audio: true } : { audio: true }
+    );
+  } catch(e) {
+    toast('Mic/camera access denied 🎙️', 'error'); return;
+  }
+
+  // 2. Set callRef BEFORE setupPeerConnection so onicecandidate can write immediately
+  callRef = _callPath();
+
+  // 3. Create peer connection (ICE trickle will start writing to Firebase right away)
+  setupPeerConnection();
+
+  // 4. Create offer → setLocalDescription (triggers ICE gathering)
+  const offer = await pc.createOffer();
+  await pc.setLocalDescription(offer);
+
+  // 5. Write offer + status to Firebase so callee sees it
+  await set(callRef, {
+    callerId:   currentUser.uid,
+    callerName: currentUser.displayName || currentUser.email.split('@')[0],
+    type,
+    offer: { sdp: offer.sdp, type: offer.type },
+    status: 'ringing',
+    ts: Date.now()
+  });
+
+  showCallActive(type, currentUser.displayName || 'You', false);
+  document.getElementById('call-active-status').textContent = 'Calling… 📞';
+
+  // 6. Listen for answer + callee ICE candidates
+  let answerSet = false;
+  callListener = onValue(callRef, async snap => {
+    const d = snap.val();
+    if (!d) { endCallClean('Call ended'); return; }
+    if (d.status === 'rejected') { endCallClean('Call declined ❌'); return; }
+    if (d.status === 'ended')    { endCallClean('Call ended'); return; }
+
+    // Set remote description exactly once when answer arrives
+    if (d.answer && !answerSet && pc && pc.signalingState === 'have-local-offer') {
+      answerSet = true;
+      try {
+        await pc.setRemoteDescription(new RTCSessionDescription(d.answer));
+        console.log('[SDP] remote description set (answer)');
+      } catch(e) {
+        console.error('[SDP] setRemoteDescription failed', e);
+      }
+    }
+
+    // Apply any new ICE candidates the callee has written
+    if (d.calleeIce) await _applyNewIce(d.calleeIce, 'callee');
+  });
+};
+
+// ── CALLEE: listen for incoming calls ─────────────────────────────────────────
+function listenForIncomingCalls(roomId) {
+  if (incomingCallRef) off(incomingCallRef);
+  incomingCallRef = ref(db, `rooms/${roomId}/call`);
+  onValue(incomingCallRef, snap => {
+    const data = snap.val();
+    if (!data || pc) return;   // ignore if already in a call
+    for (const [cid, call] of Object.entries(data)) {
+      if (call.callerId === currentUser?.uid) continue;
+      if (call.status === 'ringing') {
+        showIncomingCall(cid, call);
+        return;
+      }
+    }
+  });
+}
+
+function showIncomingCall(cid, call) {
+  // Don't ring if already in a call
+  if (pc) return;
+
+  callId     = cid;
+  callRoomId = currentRoomId;
+  callRef    = ref(db, `rooms/${currentRoomId}/call/${cid}`);
+  callRole   = 'callee';
+  callType   = call.type || 'voice';
+
+  const initials = (call.callerName || '?')[0].toUpperCase();
+  document.getElementById('call-incoming-avatar').textContent = initials;
+  document.getElementById('call-incoming-name').textContent   = call.callerName || 'Someone';
+  document.getElementById('call-incoming-type').textContent   = callType === 'video' ? '📹 Incoming video call…' : '📞 Incoming voice call…';
+  document.getElementById('call-accept-voice').style.display  = callType === 'video' ? 'none' : 'flex';
+  document.getElementById('call-accept-video').style.display  = callType === 'video' ? 'flex' : 'none';
+  document.getElementById('call-incoming').classList.add('show');
+
+  window._pendingOffer = call.offer;
+  try { playRingtone(); } catch(e){}
+}
+
+window.acceptCall = async () => {
+  stopRingtone();
+  document.getElementById('call-incoming').classList.remove('show');
+
+  // 1. Get media
+  try {
+    localStream = await navigator.mediaDevices.getUserMedia(
+      callType === 'video' ? { video: { facingMode }, audio: true } : { audio: true }
+    );
+  } catch(e) {
+    toast('Mic/camera access denied 🎙️', 'error');
+    await set(_callPath('status'), 'rejected').catch(()=>{});
+    return;
+  }
+
+  // 2. callRef already set in showIncomingCall — create peer connection
+  setupPeerConnection();
+
+  // 3. setRemoteDescription with caller's offer
+  try {
+    await pc.setRemoteDescription(new RTCSessionDescription(window._pendingOffer));
+    console.log('[SDP] remote description set (offer)');
+  } catch(e) {
+    console.error('[SDP] setRemoteDescription failed', e);
+    endCallClean('Call setup failed'); return;
+  }
+
+  // 4. Create answer → setLocalDescription (triggers ICE gathering)
+  const answer = await pc.createAnswer();
+  await pc.setLocalDescription(answer);
+
+  // 5. Write answer to Firebase so caller picks it up
+  await set(_callPath('answer'), { sdp: answer.sdp, type: answer.type });
+  await set(_callPath('status'), 'answered');
+
+  const callerName = document.getElementById('call-incoming-name').textContent;
+  showCallActive(callType, callerName, true);
+
+  // 6. Listen for caller ICE candidates + call end
+  callListener = onValue(callRef, async snap => {
+    const d = snap.val();
+    if (!d) { endCallClean('Call ended'); return; }
+    if (d.status === 'ended') { endCallClean('Call ended'); return; }
+    if (d.callerIce) await _applyNewIce(d.callerIce, 'caller');
+  });
+};
+
+window.rejectCall = async () => {
+  stopRingtone();
+  document.getElementById('call-incoming').classList.remove('show');
+  if (callRef) await set(_callPath('status'), 'rejected').catch(()=>{});
+  callRef = null; callId = null; callRole = null;
+};
+
+function showCallActive(type, name, isCallee) {
+  document.getElementById('call-active').classList.add('show');
+  document.getElementById('call-active-name').textContent = name;
+  document.getElementById('call-active-status').textContent = isCallee ? 'Connected' : 'Ringing...';
+  document.getElementById('call-timer').style.display = 'none';
+  document.getElementById('call-audio-visual').style.display = type === 'video' ? 'none' : 'flex';
+  document.getElementById('call-remote-video').style.display = type === 'video' ? 'block' : 'none';
+  document.getElementById('call-local-video').style.display = type === 'video' ? 'block' : 'none';
+  const initials = (name || '?')[0].toUpperCase();
+  document.getElementById('call-audio-avatar').textContent = initials;
+  // Reset controls
+  isMuted = false; isCameraOff = false;
+  updateCtrlBtn('ctrl-mute', false, '🎤', '🔇');
+  updateCtrlBtn('ctrl-camera', false, '📷', '📷');
+  document.getElementById('ctrl-camera').style.display = type === 'video' ? 'flex' : 'none';
+  document.getElementById('ctrl-flip').style.display = type === 'video' ? 'flex' : 'none';
+  document.getElementById('call-local-video').style.display = type === 'video' ? 'block' : 'none';
+}
+
+window.endCall = async () => {
+  if (callRef && callId && callRoomId) {
+    await set(ref(db, `rooms/${callRoomId}/call/${callId}/status`), 'ended').catch(()=>{});
+  }
+  endCallClean('Call ended 👋');
+};
+
+function endCallClean(msg) {
+  stopCallTimer();
+  stopRingtone();
+  // Tear down peer connection
+  if (pc) { try { pc.close(); } catch(e){} pc = null; }
+  // Stop local media
+  if (localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; }
+  // Unsubscribe per-call listener only (NOT incomingCallRef)
+  if (callListener) { callListener(); callListener = null; }
+  // Clear call state
+  callRef = null; callId = null; callRole = null;
+  if (typeof _appliedIce !== "undefined") { _appliedIce.caller.clear(); _appliedIce.callee.clear(); }
+  // Hide overlays
+  document.getElementById("call-active").classList.remove("show");
+  document.getElementById("call-incoming").classList.remove("show");
+  // Clear video elements
+  const rv = document.getElementById("call-remote-video");
+  const lv = document.getElementById("call-local-video");
+  if (rv) rv.srcObject = null;
+  if (lv) lv.srcObject = null;
+  if (msg) toast(msg);
+  // Re-attach incoming-call listener so new calls still ring
+  if (currentRoomId) listenForIncomingCalls(currentRoomId);
+}
+
+// ---- Call Controls ----
+window.toggleMute = () => {
+  isMuted = !isMuted;
+  if (localStream) localStream.getAudioTracks().forEach(t => t.enabled = !isMuted);
+  updateCtrlBtn('ctrl-mute', isMuted, '🎤', '🔇');
+};
+
+window.toggleCamera = () => {
+  isCameraOff = !isCameraOff;
+  if (localStream) localStream.getVideoTracks().forEach(t => t.enabled = !isCameraOff);
+  document.getElementById('ctrl-camera').classList.toggle('muted', isCameraOff);
+};
+
+window.toggleSpeaker = () => {};
+
+window.flipCamera = async () => {
+  facingMode = facingMode === 'user' ? 'environment' : 'user';
+  if (!localStream) return;
+  const newStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode }, audio: true }).catch(()=>null);
+  if (!newStream) return;
+  const videoTrack = newStream.getVideoTracks()[0];
+  const sender = pc?.getSenders().find(s => s.track?.kind === 'video');
+  if (sender) await sender.replaceTrack(videoTrack).catch(()=>{});
+  localStream.getVideoTracks().forEach(t => t.stop());
+  document.getElementById('call-local-video').srcObject = newStream;
+  localStream = newStream;
+};
+
+function updateCtrlBtn(id, isActive, iconOn, iconOff) {
+  const btn = document.getElementById(id);
+  if (!btn) return;
+  btn.textContent = isActive ? iconOff : iconOn;
+  btn.classList.toggle('muted', isActive);
+}
+
+// ---- Call Timer ----
+function startCallTimer() {
+  callSeconds = 0;
+  clearInterval(callTimerInterval);
+  callTimerInterval = setInterval(() => {
+    callSeconds++;
+    const m = Math.floor(callSeconds / 60);
+    const s = callSeconds % 60;
+    const el = document.getElementById('call-timer');
+    if (el) el.textContent = `${m}:${s.toString().padStart(2,'0')}`;
+  }, 1000);
+}
+function stopCallTimer() {
+  clearInterval(callTimerInterval);
+  callSeconds = 0;
+  const el = document.getElementById('call-timer');
+  if (el) { el.textContent = '0:00'; el.style.display = 'none'; }
+}
+
+// ---- Ringtone via Web Audio API ----
+let audioCtx = null, ringtoneInterval = null;
+function playRingtone() {
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  function beep() {
+    if (!audioCtx) return;
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.connect(g); g.connect(audioCtx.destination);
+    o.frequency.value = 480; o.type = 'sine';
+    g.gain.setValueAtTime(0.3, audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.4);
+    o.start(); o.stop(audioCtx.currentTime + 0.4);
+  }
+  beep(); ringtoneInterval = setInterval(beep, 1200);
+}
+function stopRingtone() {
+  clearInterval(ringtoneInterval);
+  if (audioCtx) { audioCtx.close().catch(()=>{}); audioCtx = null; }
+}
+
+// ---- Patch joinRoom to attach call listener ----
+const _origJoinRoom = window.joinRoom;
+window.joinRoom = async (...args) => {
+  await _origJoinRoom(...args);
+  listenForIncomingCalls(args[0]);
+};
+
+// ==================== END CALL FEATURE ====================
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>
