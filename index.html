@@ -572,15 +572,14 @@ import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, si
 import { getDatabase, ref, push, onValue, off, set, remove, serverTimestamp, onDisconnect, get } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
 const firebaseConfig = {
-  apiKey: "AlzaSyB_uxgKKr1zb01f51PGNm4T8lf7YvsKCNI",
+  apiKey: "AIzaSyB_uxgKKr1zbO1f51PGNm4T8lf7YvsKCNI",
   authDomain: "gkfxl-f777.firebaseapp.com",
-  databaseURL: "https://gkfxl-f777-default-rtdb.asia-southeast1.firebasedatabase.app/",
+  databaseURL: "https://gkfxl-f777-default-rtdb.asia-southeast1.firebasedatabase.app",
   projectId: "gkfxl-f777",
   storageBucket: "gkfxl-f777.firebasestorage.app",
   messagingSenderId: "63790218267",
   appId: "1:63790218267:web:9be2041743b64479850cbe"
 };
-
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getDatabase(app);
